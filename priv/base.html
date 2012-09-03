@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>TurkGate</title>
+  <meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+  <link rel="stylesheet" type="text/css" href="/static/reset.css">
+  <link rel="stylesheet" type="text/css" href="/static/style.css">
+  <script type="text/javascript" src="/static/jquery.min.js"></script>
+  <script type="text/javascript" src="/static/code.js"></script>
+{% block head %}{% endblock %}
+</head>
+<body>
+
+<ul class="nav nav1">
+  <li><a href="#" rel="self">Post</a></li>
+  <li><a href="#">Manage</a></li>
+  <p id="signin_info">Signed in as <strong>{{ user.nickname }}</strong></p>
+</ul>
+<ul class="nav nav2" id="nav21">
+  <li><a href="/hits">Countdown</a></li>
+  <li><a href="/hits?type=urls">Batches</a></li>
+  <li><a href="/hits?type=time">Focal Time</a></li>
+  <li><a href="/hits?type=pass">Pass-Through</a></li>
+</ul>
+<ul class="nav nav2" id="nav22" style="display: none">
+  <li><a href="/turkadmin">Log</a></li>
+  <li><a href="/turkadmin/assignment/approval/form">Approve Assignments</a></li>
+  <li><a href="/turkadmin/assignment/rejection/form">Reject Assignments</a></li>
+  <li><a href="/turkadmin/worker/bonus/form">Grant Bonuses</a></li>
+  <li><a href="/turkadmin/worker/notification/form">Notify Workers</a></li>
+</ul>
+
+<script>
+  $(document).ready(function () {
+    $('.nav2 a').each(function () {
+      var link = $(this);
+      if (link.attr('href') == window.location.pathname + window.location.search) {
+        link.attr('rel', 'self');
+      }
+    });
+
+    $('.nav1 a').click(function () {
+      $('.nav1 a').attr('rel', '');
+      $(this).attr('rel', 'self');
+      if ($(this).is(":contains('Post')")) {
+        $("#nav21").show();
+        $("#nav22").hide();
+      } else if ($(this).is(":contains('Manage')")) {
+        $("#nav21").hide();
+        $("#nav22").show();
+      }
+      return false;
+    });
+
+  });
+</script>
+{% block content %}{% endblock %}
+
+</body>
+</html>

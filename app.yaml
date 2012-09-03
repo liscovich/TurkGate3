@@ -1,0 +1,27 @@
+application: mturkgate
+version: 2
+runtime: python
+api_version: 1
+
+handlers:
+- url: /static
+  static_dir: static
+
+- url: /notification
+  script: main.py
+
+- url: /turkadmin/operation/task
+  script: main_admin.py
+
+- url: /turkadmin.*
+  script: main_admin.py
+  login: required
+
+- url: /hit/.*
+  script: main.py
+  secure: always
+
+- url: /.*
+  script: main.py
+  login: required
+

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>{{ title|escape }}</title>
+  <meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+  <link rel="stylesheet" type="text/css" href="/static/reset.css">
+  <link rel="stylesheet" type="text/css" href="/static/style.css">
+  <script type="text/javascript" src="/static/jquery.min.js"></script>
+  <script type="text/javascript" src="/static/code.js"></script>
+  <script type="text/javascript">
+    function getUrlVars() {
+      var vars = {};
+
+      var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+
+      for(var i = 0; i < hashes.length; i++) {
+        var hash = hashes[i].split('=');
+
+        vars[decodeURIComponent(hash[0])] = decodeURIComponent(hash[1]);
+      }
+
+      return vars;
+    }
+
+    $(document).ready(function () {
+      var h2 = $('#time');
+
+      var countdown = new TurkGate.Countdown(parseInt(h2.text(), 10), h2);
+
+      var countdownTimer = new TurkGate.Timer(500, function () { countdown.tick(); });
+
+      var heartbeatURL = {{ heartbeat_url }};
+
+      var locationURL = {{ location_url }};
+
+      var clickgoURL = {{ clickgo_url }};
+
+      var heartbeatTimer = new TurkGate.Timer(2000, function () {
+        jQuery.getJSON(heartbeatURL + window.location.search, function (data) {
+          if (data.remaining) {
+            $('#remaining').text(data.remaining);
+          }
+          if (data.go) {
+            countdownTimer.stop();
+
+            heartbeatTimer.stop();
+
+            jQuery.getJSON(locationURL + window.location.search, function (data) {
+              if (data.available) {
+                //if (clickgoURL != '') {
+                //  jQuery.getJSON(clickgoURL, function (data) {});
+                //}
+                //window.open(data.location, '_blank');
+                
+                $('#go').text("Proceed to the game").click(function () {
+                  if (clickgoURL != '') {
+                    jQuery.getJSON(clickgoURL, function (data) {});
+                  }
+
+                  window.open(data.location, '_blank');
+
+                  if (data.submit) {
+                    $('#submit').click();
+                  }
+                }).show();
+              } else {
+                $('#message').text(data.message).show();
+              }
+            });
+
+          }
+        });
+      });
+
+      countdown.fire(function () {
+        countdownTimer.stop();
+
+        heartbeatTimer.stop();
+
+        jQuery.getJSON(locationURL + window.location.search, function (data) {
+          if (data.available) {
+            $('#go').text("Proceed to the game").click(function () {
+              if (clickgoURL != '') {
+                jQuery.getJSON(clickgoURL, function (data) {});
+              }
+
+              window.open(data.location, '_blank');
+
+              if (data.submit) {
+                $('#submit').click();
+              }
+            }).show();
+          } else {
+            $('#message').text(data.message).show();
+
+            if (data.submit) {
+              $('#go').text("Submit").click(function () { $('#submit').click(); }).show()
+            }
+          }
+        });
+      });
+
+      var params = getUrlVars();
+
+      if (params.assignmentId) {
+        $('#assignmentId').attr('value', params.assignmentId);
+      }
+
+      if (params.turkSubmitTo) {
+        $('form').attr('action', params.turkSubmitTo + '/mturk/externalSubmit');
+      }
+    });
+  </script>
+  <style type="text/css" media="screen">
+    h1, h2, h3 {
+      margin: 25px;
+    }
+  </style>
+</head>
+<body>
+
+  {{ info }}
+
+  {% ifequal hit.type 'MULTIPLE_URLS' %}
+  <h2 id="time" style="display: none;">{{ time|escape }}</h2>
+  <h2>Waiting for <span id="remaining"></span> additional players</h2>
+  {% else %}{% ifequal hit.type 'PASS_THROUGH' %}
+  <h2 id="time" style="display: none;">{{ time|escape }}</h2>
+  {% else %}
+  <h2 id="time">{{ time|escape }}</h2>
+  {% endifequal %}{% endifequal %}
+
+  <h3 id="message" style="display:none"></h3>
+
+  <h3><button id="go" style="display:none"></button></h3>
+
+  <form style="display:none" action="." method="POST">
+    <input type="hidden" name="assignmentId" id="assignmentId" value="temp">
+    <input type="hidden" name="default" value="default">
+    <input id="submit" type="submit" value="Submit">
+  </form>
+
+</body>
+</html>

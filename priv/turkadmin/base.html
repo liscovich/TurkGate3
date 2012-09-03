@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Turkontrol</title>
+<link rel="stylesheet" href="/static/reset.css">
+<link rel="stylesheet" href="/static/style_admin.css">
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+{% block head %}{% endblock %}
+</head>
+<body>
+
+<ul class="nav nav1">
+  <li><a href="#">Post</a></li>
+  <li><a href="#" rel="self">Manage</a></li>
+</ul>
+<ul class="nav nav2" id="nav21" style="display: none">
+  <li><a href="/hits">Countdown</a></li>
+  <li><a href="/hits?type=urls">Batches</a></li>
+  <li><a href="/hits?type=time">Focal Time</a></li>
+  <li><a href="/hits?type=pass">Pass-Through</a></li>
+</ul>
+<ul class="nav nav2" id="nav22">
+  <li><a href="/turkadmin">Log</a></li>
+  <li><a href="/turkadmin/assignment/approval/form">Approve Assignments</a></li>
+  <li><a href="/turkadmin/assignment/rejection/form">Reject Assignments</a></li>
+  <li><a href="/turkadmin/worker/bonus/form">Grant Bonuses</a></li>
+  <li><a href="/turkadmin/worker/notification/form">Notify Workers</a></li>
+</ul>
+
+<script>
+  $(document).ready(function () {
+    $('.nav2 a').each(function () {
+      var link = $(this);
+      if (link.attr('href') == window.location.pathname + window.location.search) {
+        link.attr('rel', 'self');
+      }
+    });
+
+    $('.nav1 a').click(function () {
+      $('.nav1 a').attr('rel', '');
+      $(this).attr('rel', 'self');
+      if ($(this).is(":contains('Post')")) {
+        $("#nav21").show();
+        $("#nav22").hide();
+      } else if ($(this).is(":contains('Manage')")) {
+        $("#nav21").hide();
+        $("#nav22").show();
+      }
+      return false;
+    });
+
+  });
+</script>
+
+{% block body %}{% endblock %}
+
+<script>
+  $(document).ready(function () {
+    $('.clickable_rows tbody').click(function (event) {
+      var tr = $(event.target).closest('tr');
+
+      window.location = tr.attr('data-url');
+    });
+  });
+</script>
+
+</body>
+</html>

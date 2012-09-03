@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block body %}
+  <form action="{{ url|escape }}" method="POST" enctype="multipart/form-data">
+    {% include "aws_form_inputs.html" %}
+
+    <div>
+      <label>Parameters (.csv file)</label>
+      <span class="hint">3 columns: Worker ID, Message Subject, and Message Text.</span>
+      <input type="file" name="parameters">
+    </div>
+
+    <div>
+      <input type="submit" value="Preview">
+    </div>
+  </form>
+{% endblock %}

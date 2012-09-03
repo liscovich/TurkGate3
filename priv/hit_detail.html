@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block head %}
+  <script type="text/javascript">
+    function cancelHit() {
+      var r = confirm("Are you sure to delete this hit?"); 
+      if (r == true) {
+        jQuery.getJSON({{ cancel_url }}, function (data, textStatus, xhr) {
+          window.location = "/hits";
+        });
+      }
+    }
+
+    $(document).ready(function () {
+     
+     $('time').each(function () {
+       var element = $(this);
+
+       var datetime = element.text();
+
+       element.attr('datetime', datetime).text(TurkGate.dateFormat(TurkGate.datetimeParse(datetime)));
+     });
+
+      var location = $('.hit_detail .location');
+
+      location.each(function() {
+        $(this).html(TurkGate.urlLink($(this).text()))
+      });
+
+      var timestamp = {{ timestamp }};      
+      if (timestamp) {
+        var workerList = new TurkGate.WorkerList($('.hit_realtime'));
+
+        var updater = new TurkGate.JsonPoll({{ workers_url }}, function (data) { workerList.load(data); });
+
+        var countdown = new TurkGate.Countdown(timestamp, $('.hit_realtime .countdown'));
+
+        var updaterTimer = new TurkGate.Timer(3000, function () { updater.update(); });
+
+        var countdownTimer = new TurkGate.Timer(500, function () { countdown.tick(); });
+
+        updater.update();
+
+        countdown.fire(function () {
+          countdownTimer.stop();
+          updaterTimer.stop();
+          //window.location = "{{ hit.location }}";
+        });
+      }
+    });
+  </script>
+{% endblock %}
+
+{% block content %}
+  <div style="position: relative; top: 0; left: 0">
+    <div class="hit_detail">
+      <div class="head">
+        <span class="label">Added</span><time class="value">{{ added|escape }}</time>
+      </div>
+
+      <div class="body">
+        <span class="label">MTurk ID</span><span class="value">{{ hit.mturkid|escape }}</span>
+      </div>
+
+      <div class="body">
+        <span class="label">HIT Group</span><span class="value"><a href="{{ hit_group_url|escape }}">{{ hit.groupid|escape }}</a></span>
+      </div>
+
+      <div class="body">
+        <span class="label">Title</span><span class="value">{{ hit.title|escape }}</span>
+      </div>
+
+      <div class="body">
+        <span class="label">Description</span><span class="text value">{{ hit.description|escape }}</span>
+      </div>
+
+      <div class="body">
+        <span class="label">Info</span><span class="text value">{{ hit.info|escape }}</span>
+      </div>
+
+      {% ifequal hit.type 'MULTIPLE_URLS' %}
+        {% for i in 11|get_range:1 %}{# 1..10 #}
+          {% if hit|get_location:i %}
+          <div class="body">
+            <span class="label">Location {{ i }} (URL)</span><span class="location value">{{ hit|get_location:i|escape }}</span>
+          </div>
+          {% endif %}
+        {% endfor %}
+      {% else %}
+          <div class="body">
+            <span class="label">Location (URL)</span><span class="location value">{{ hit.location|escape }}</span>
+          </div>
+      {% endifequal %}
+
+      <div class="body">
+        <span class="label">Lifetime (Seconds)</span><span class="value">{{ hit.lifetime|escape }}</span>
+      </div>
+
+      <div class="body">
+        <span class="label">Duration (Seconds)</span><span class="value">{{ hit.duration|escape }}</span>
+      </div>
+
+      <div class="body">
+        <span class="label">Approval Delay (Seconds)</span><span class="value">{{ hit.approval_delay|escape }}</span>
+      </div>
+
+      <div class="body">
+        <span class="label">HIT Approval</span><span class="value">{{ hit.hit_approval|escape }}</span>
+      </div>
+
+      <div class="body">
+        <span class="label">HIT Approval Rate</span><span class="value">{{ hit.hit_approval_rate|escape }}</span>
+      </div>
+
+      <div class="body">
+        <span class="label">Accepted HIT Rate</span><span class="value">{{ hit.accepted_hit_rate|escape }}</span>
+      </div>
+
+      <div class="body">
+        <span class="label">Returned HIT Rate</span><span class="value">{{ hit.returned_hit_rate|escape }}</span>
+      </div>
+
+      <div class="body">
+        <span class="label">Abandoned HIT Rate(LessThan)</span><span class="value">{{ hit.abandoned_hit_rate|escape }}</span>
+      </div>
+
+      <div class="body">
+        <span class="label">Rejected HIT Rate(LessThan)</span><span class="value">{{ hit.rejected_hit_rate|escape }}</span>
+      </div>
+
+      <div class="body">
+        <span class="label">Locale Qualification</span><span class="value">{{ hit.locale_qualification|escape }}</span>
+      </div>
+
+      <div class="body">
+        <span class="label">Frame Height (Pixels)</span><span class="value">{{ hit.frame_height|escape }}</span>
+      </div>
+
+      <div class="body">
+        <span class="label">Max. Workers</span><span class="value">{{ hit.max_workers|escape }}</span>
+      </div>
+
+      <div class="body">
+        <span class="label">Min. Workers</span><span class="value">{{ hit.min_workers|escape }}</span>
+      </div>
+
+      <div class="body">
+        <span class="label">Reward (USD)</span><span class="value">{{ hit.reward|escape }}</span>
+      </div>
+
+      <div class="body">
+        <span class="label">Auth Secret</span><span class="value">{{ hit.auth_secret|escape }}</span>
+      </div>
+
+      <div class="body">
+        <span class="label">Focal Time</span><span class="value">{{ focal_time|escape }}</span>
+      </div>
+
+      <div class="body">
+        <span class="label">Handle Submit?</span><span class="value">{% if hit.handle_submit %}YES{% else %}NO{% endif %}</span>
+      </div>
+
+      <div class="body">
+        <span class="label">Always Pay?</span><span class="value">{% if hit.always_pay %}YES{% else %}NO{% endif %}</span>
+      </div>
+
+      <div class="foot">
+        <span class="label">Sandbox?</span><span class="value">{% if hit.sandbox %}YES{% else %}NO{% endif %}</span>
+      </div>
+
+      <div class="button_left">
+        {% ifequal hit.type 'MULTIPLE_URLS' %}
+        <input type="button" value="Replicate" onclick="window.open('/hits?replicate={{ hit.key }}&type=urls');" />
+        {% else %}{% ifequal hit.type 'FOCAL_TIME' %}
+        <input type="button" value="Replicate" onclick="window.open('/hits?replicate={{ hit.key }}&type=time');" />
+        {% else %}{% ifequal hit.type 'PASS_THROUGH' %}
+        <input type="button" value="Replicate" onclick="window.open('/hits?replicate={{ hit.key }}&type=pass');" />
+        {% else %}
+        <input type="button" value="Replicate" onclick="window.open('/hits?replicate={{ hit.key }}');" />
+        {% endifequal %}{% endifequal %}{% endifequal %}
+      </div>
+
+      <div class="button_right">
+        <input type="button" value="Cancel" onclick="cancelHit();" />
+      </div>
+    </div>
+
+    <div class="hit_realtime rhs">
+      <p class="countdown"></p>
+    </div>
+  </div>
+{% endblock %}

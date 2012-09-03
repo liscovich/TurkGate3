@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+
+{% block head %}
+  <script type="text/javascript">
+    function replicate_hit(id) {
+      jQuery.getJSON('/hit/' + id + '/detail.json', function (data, textStatus) {
+        if (textStatus === 'success' ) {
+          var form = $('form');
+          $.each(data, function(key, value) { 
+            //TurkGate.log(key + ': ' + value); 
+            $('[name="' + key + '"]', form).val(value);
+          });
+        }
+      });
+    }
+
+    $(document).ready(function () {
+      var tbody = $('.hit_list tbody');
+
+      {% ifequal type 'MULTIPLE_URLS' %}
+      var url = '/hits.json?type=urls';
+      {% else %}{% ifequal type 'FOCAL_TIME' %}
+      var url = '/hits.json?type=time';
+      {% else %}{% ifequal type 'PASS_THROUGH' %}
+      var url = '/hits.json?type=pass';
+      {% else %}
+      var url = '/hits.json';
+      {% endifequal %}{% endifequal %}{% endifequal %}
+
+      jQuery.getJSON(url, function (data, textStatus) {
+        jQuery.each(data, function (index, hit) {
+          var tr = $$('tr').appendTo(tbody);
+
+          tr.get(0).url = hit.url;
+
+          var td = $$('td').text('').appendTo(tr);
+          $$('a').attr({ href: '#', class: 'replicate', id: hit.key }).text('Replicate').appendTo(td);
+
+          $$('td').attr('datetime', hit.added)
+                  .text(TurkGate.dateFormat(TurkGate.datetimeParse(hit.added)))
+                  .appendTo(tr);
+
+          $$('td').text(hit.title).appendTo(tr);
+
+          $$('td').attr({class:'location_link'}).html(TurkGate.urlLink(hit.location)).appendTo(tr);
+
+          var td = $$('td').text('').appendTo(tr);
+
+          if (hit.time) {
+            var countdown = new TurkGate.Countdown(hit.time, td);
+
+            var timer = new TurkGate.Timer(500, function () { countdown.tick(); });
+
+            countdown.fire(function () { timer.stop(); });
+          }
+        });
+      });
+
+      // bind events to Replicate buttons
+      $(".replicate").live('click', function() {
+        var id = $(this).attr('id');
+        replicate_hit(id);
+        return false;
+      });
+
+      $(".location_link").live('click', function() {
+        window.location = $(this).find('a').attr('href');
+        return false;
+      });
+
+      $("table.hit_list tbody tr").live('click', function() {
+        var id = $(this).find('a.replicate').attr('id');
+        window.location = $(this).get(0).url;
+        return false;
+      });
+
+      //tbody.click(function (event) {
+      //  window.location = $(event.target).closest('tr').get(0).url;
+      //});
+
+      new TurkGate.Form($('form'), [
+        {type: 'text', label: 'Title', name: 'title', value: ''}
+      , {type: 'textarea', label: 'Description', name: 'description', value: '', attrs: {rows: 3}}
+
+      {% ifequal type 'MULTIPLE_URLS' %}
+        {% for i in 11|get_range:1 %}{# 1..10 #}
+        , {type: 'text', label: 'Location {{ i }} (URL)', name: 'location{{ i }}', value: '', full_width: false, class: 'location_input'}
+        {% endfor %}
+      {% else %}
+        , {type: 'text', label: 'Location (URL)', name: 'location', value: ''}
+      {% endifequal %}
+
+      , {type: 'textarea', label: 'Info (HTML)', name: 'info', value: '', attrs: {rows: 3}}
+      , {type: 'textarea', label: 'Blacklist (Worker IDs)', name: 'blacklist', value: '', attrs: {rows: 3}}
+
+      //, {type: 'text', label: 'Approved HIT(Greater)', name: 'hit_approval', value: '', full_width: false, attrs: {size: 16}}
+      , {type: 'number', label: 'Approved HIT(Greater)', name: 'hit_approval', value: 0, attrs: {min: 0, max: 100000}}
+      , {type: 'number', label: 'Approved HIT Rate(Greater)', name: 'hit_approval_rate', value: 0, attrs: {min: 0, max: 100}}
+      , {type: 'number', label: 'Accepted HIT Rate(Greater)', name: 'accepted_hit_rate', value: 0, attrs: {min: 0, max: 100}}
+      , {type: 'number', label: 'Returned HIT Rate(Greater)', name: 'returned_hit_rate', value: 0, attrs: {min: 0, max: 100}}
+      , {type: 'number', label: 'Abandoned HIT Rate(Less)', name: 'abandoned_hit_rate', value: 0, attrs: {min: 0, max: 100}}
+      , {type: 'number', label: 'Rejected HIT Rate(Less)', name: 'rejected_hit_rate', value: 0, attrs: {min: 0, max: 100}}
+      , {type: 'select', label: 'Locale Qualification', name: 'locale_qualification', choices: [
+          {value: 'all',   text: 'All'},
+          {value: 'us', text: 'US'}
+        ]}
+      , {type: 'number', label: 'Lifetime (Seconds)', name: 'lifetime', value: 300, attrs: {min: 30, max: 31536000}}
+      , {type: 'number', label: 'Duration (Seconds)', name: 'duration', value: 300, attrs: {min: 30, max: 31536000}}
+      , {type: 'number', label: 'Approval Delay (Seconds)', name: 'approval_delay', value: 2592000, attrs: {min: 0, max: 2592000}}
+      , {type: 'number', label: 'Frame Height (Pixels)', name: 'frame_height', value: 500, attrs: {min: 300, max: 700}}
+
+      {% ifnotequal type 'MULTIPLE_URLS' %}
+      , {type: 'number', label: 'Max. Workers', name: 'max_workers', value: 5, attrs: {min: 1, max: 1000000000}}
+        {% ifnotequal type 'PASS_THROUGH' %}
+        , {type: 'number', label: 'Min. Workers', name: 'min_workers', value: 0, attrs: {min: 0, max: 1000000000}}
+        {% endifnotequal %}
+      {% endifnotequal %}
+
+      , {type: 'text', label: 'Reward (USD)', name: 'reward', value: '0.01', full_width: false, attrs: {size: 16}}
+      , {type: 'text', label: 'AWS Access Key', name: 'aws_access_key', value: ''}
+      , {type: 'text', label: 'AWS Secret Key', name: 'aws_secret_key', value: ''}
+      , {type: 'text', label: 'Auth Secret', name: 'auth_secret', value: ''}
+      , {type: 'select', label: 'Handle Submit?', name: 'handle_submit', choices: [
+          {value: 'true', text: 'YES (submit from ' + window.location.host + ')'}
+        , {value: '', text: 'NO (submit from external location)'}
+        ]}
+      , {type: 'select', label: 'Always Pay?', name: 'always_pay', choices: [
+          {value: 'true', text: 'YES'}
+        , {value: '', text: 'NO'}
+        ]}
+      , {type: 'select', label: 'MTurk Sandbox?', name: 'sandbox', choices: [
+          {value: 'true', text: 'YES'}
+        , {value: '', text: 'NO'}
+        ]}
+      {% ifequal type 'FOCAL_TIME' %}
+      , {type: 'text', label: 'Focal time', name: 'focal_time', full_width: false, value: "{{ time }}" }
+      {% endifequal %}
+      ]);
+
+      {% ifequal type 'MULTIPLE_URLS' %}
+      $(".location_input").each(function() {
+        var id = $(this).attr('id').replace('location', 'size');
+        var name = id.replace('_input', '');
+        $$('input').attr({ id: id, name: name, class: 'size', type: 'text', value: '0' }).insertAfter($(this));
+      });
+      {% endifequal %}
+
+      // Init the form if having replicate parameter
+      var id = TurkGate.getParameter('replicate');
+      //TurkGate.log(id);
+      if (id != 'null') {
+        replicate_hit(id);
+      }
+    });
+  </script>
+
+  {% ifequal type 'FOCAL_TIME' %}
+  <link rel="stylesheet" media="all" type="text/css" href="/static/jqueryui/css/ui-lightness/jquery-ui-1.8.12.custom.css" />
+  <link rel="stylesheet" media="all" type="text/css" href="/static/jquery-timepicker/css/jquery-ui-timepicker-addon.css" />
+  <script type="text/javascript" src="/static/jqueryui/js/jquery-ui-1.8.12.custom.min.js"></script><!-- removed the datepicker -->
+  <script type="text/javascript" src="/static/jqueryui/js/jquery.ui.datepicker.js"></script>
+  <script type="text/javascript" src="/static/jquery-timepicker/js/jquery-ui-timepicker-addon.js"></script>
+  <script type="text/javascript">
+    $(document).ready(function () {
+      var client_datetime = TurkGate.datetimeParse("{{ time }}");
+      var server_datetime = new Date(
+        client_datetime.getUTCFullYear(),
+        client_datetime.getUTCMonth(),
+        client_datetime.getUTCDate(),
+        client_datetime.getUTCHours(),
+        client_datetime.getUTCMinutes(),
+        client_datetime.getUTCSeconds()
+      );
+      var ft = $('#focal_time_input').datetimepicker({
+        dateFormat: 'yy-mm-ddT',
+        timeFormat: 'hh:mmZ',
+        separator: '',
+        minDateTime: server_datetime,
+        hour: client_datetime.getUTCHours(),
+        minute: client_datetime.getUTCMinutes(),
+        defaultDate: -1,
+      });
+      $$('label').text("{{ time }}").attr({id: 'server_datetime'})
+        .css({'margin-top': '5px'}).insertAfter($('#focal_time_input'));
+      $$('label').text("Server time")
+        .css({'margin-top': '5px'}).insertAfter($('#focal_time_input'));
+      var timer = new TurkGate.Timer(60000, function () {
+        jQuery.getJSON('/datetime.json', function (data) {
+          $('#server_datetime').text(data);
+        });
+      });
+    });
+  </script>
+  {% endifequal %}
+{% endblock %}
+
+{% block content %}
+  <div style="position: relative; top: 0; left: 0">
+    <form class="hit_detail"></form>
+
+    <table class="hit_list rhs">
+      <thead>
+        <tr>
+          <th scope="col">Action</th>
+          <th scope="col">Added at</th>
+          <th scope="col">Title</th>
+          <th scope="col">Location</th>
+          <th scope="col">Time</th>
+        </tr>
+      </thead>
+      <tbody>
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block body %}
+  <form action="{{ url|escape }}" method="POST" enctype="multipart/form-data">
+    {% include "aws_form_inputs.html" %}
+
+    <div>
+      <label>HIT ID</label>
+      <input type="text" name="hit_id" size="50">
+    </div>
+
+    <div>
+      <label>Reason</label>
+      <input type="text" name="reason" size="50">
+    </div>
+
+    <div>
+      <label>Assignment IDs (.csv file)</label>
+      <input type="file" name="assignment_ids">
+    </div>
+
+    <div>
+      <input type="submit" value="Preview">
+    </div>
+  </form>
+{% endblock %}
